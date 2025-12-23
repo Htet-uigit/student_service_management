@@ -7,17 +7,20 @@ import re
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="Student Service Manager", page_icon="🎓", layout="wide")
 
-# --- DATABASE CONNECTION ---
+# --- DATABASE CONNECTION (FIXED FOR HOSTING) ---
 def get_db_connection():
     try:
+        # Pulls credentials securely from Streamlit Cloud Secrets
         return mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="HtetMyat2004@", 
-            database="Final_Project"
+            host=st.secrets["mysql"]["host"],
+            user=st.secrets["mysql"]["user"],
+            password=st.secrets["mysql"]["password"],
+            database=st.secrets["mysql"]["database"],
+            port=int(st.secrets["mysql"]["port"]),
+            ssl_mode="REQUIRED" # Required for Aiven cloud security
         )
     except mysql.connector.Error as e:
-        st.error(f"Error connecting to MySQL: {e}")
+        st.error(f"Error connecting to Cloud MySQL: {e}")
         return None
 
 # --- VALIDATION HELPERS ---
@@ -70,7 +73,7 @@ def main():
         df = pd.read_sql(query, conn)
         st.dataframe(df, use_container_width=True)
 
-    # --- 3. REGISTRATION & DELETE DESK ---
+    # --- 3. REGISTRATION & MANAGEMENT ---
     elif choice == "📝 Registration Desk":
         st.title("📝 Student Management")
         
@@ -145,7 +148,6 @@ def main():
                 st.info("💡 Drop a single service record without deleting the student profile.")
                 student_name = st.selectbox("1. Select Student", st_list['name'].tolist())
                 
-                # Fetch only services THIS student is currently taking
                 logs_query = f"""
                     SELECT ss.student_service_id, ser.service_name, ss.service_date 
                     FROM StudentServices ss
@@ -156,7 +158,6 @@ def main():
                 logs_df = pd.read_sql(logs_query, conn)
                 
                 if not logs_df.empty:
-                    # Create a display label for the dropdown
                     logs_df['label'] = logs_df['service_name'] + " (" + logs_df['service_date'].astype(str) + ")"
                     selected_log_label = st.selectbox("2. Select Service to Drop", logs_df['label'].tolist())
                     
