@@ -7,7 +7,6 @@ import re
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="Student Service Manager", page_icon="🎓", layout="wide")
 
-# --- DATABASE CONNECTION (FIXED FOR HOSTING) ---
 def get_db_connection():
     try:
         # Pulls credentials securely from Streamlit Cloud Secrets
@@ -17,7 +16,8 @@ def get_db_connection():
             password=st.secrets["mysql"]["password"],
             database=st.secrets["mysql"]["database"],
             port=int(st.secrets["mysql"]["port"]),
-            ssl_mode="REQUIRED" # Required for Aiven cloud security
+            # Changed 'ssl_mode' to 'ssl_disabled=False' for better compatibility
+            ssl_disabled=False 
         )
     except mysql.connector.Error as e:
         st.error(f"Error connecting to Cloud MySQL: {e}")
@@ -199,3 +199,4 @@ def main():
 if __name__ == "__main__":
     main()
     
+
